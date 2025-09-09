@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Filter & Embed Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .api-key-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        .methods-section {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            padding: 25px;
+            margin: 0;
+        }
+
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .method-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .method-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .method-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .method-input:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        .method-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .method-button {
+            width: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .method-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .method-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .filters-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 2px solid #e9ecef;
+            display: none;
+        }
+
+        .filters-section.visible {
+            display: block;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .filter-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .checkbox-item:hover {
+            background: #e0e0e0;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .language-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .videos-section {
+            padding: 20px;
+            display: none;
+        }
+
+        .videos-section.visible {
+            display: block;
+        }
+
+        .videos-stats {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .video-info {
+            padding: 15px;
+        }
+
+        .video-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-channel {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .video-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .video-language {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .export-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 2px solid #e9ecef;
+            display: none;
+        }
+
+        .export-section.visible {
+            display: block;
+        }
+
+        .export-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .export-group {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .export-button {
+            background: linear-gradient(45deg, #FF6B6B, #ee5a52);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .export-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .export-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #c62828;
+        }
+
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: border-color 0.3s;
+            cursor: pointer;
+        }
+
+        .drag-drop-area.dragover {
+            border-color: #2196F3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .methods-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .videos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .export-buttons {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 YouTube Video Filter & Embed Generator</h1>
+            <p>Načítej, filtruj a generuj embed kódy pro YouTube videa</p>
+        </div>
+
+        <div class="api-key-section">
+            <div class="filter-title">🔑 YouTube API klíč</div>
+            <input type="password" id="apiKey" class="api-key-input" placeholder="Zadejte svůj YouTube Data API v3 klíč">
+            <small>Získejte API klíč na: <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></small>
+        </div>
+
+        <div class="methods-section">
+            <div class="methods-grid">
+                <div class="method-card">
+                    <div class="method-title">📺 NAČÍST Z KANÁLU</div>
+                    <input type="text" id="channelInput" class="method-input" placeholder="@nazevkanalu nebo Channel ID">
+                    <button id="loadChannelBtn" class="method-button">NAČÍST Z KANÁLU</button>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-title">🔍 VYHLEDÁVÁNÍ</div>
+                    <input type="text" id="searchInput" class="method-input" placeholder="Klíčová slova pro vyhledávání">
+                    <button id="searchBtn" class="method-button">VYHLEDAT VIDEA</button>
+                </div>
+
+                <div class="method-card">
+                    <div class="method-title">📝 MANUÁLNÍ URL</div>
+                    <div class="drag-drop-area" id="dropArea">
+                        <p>Přetáhněte soubor s URL nebo klikněte pro výběr</p>
+                        <input type="file" id="fileInput" style="display: none;" accept=".txt,.csv">
+                    </div>
+                    <textarea id="urlTextarea" class="method-textarea" placeholder="Vložte YouTube URL (každou na nový řádek)&#10;https://www.youtube.com/watch?v=VIDEO_ID&#10;https://youtu.be/VIDEO_ID"></textarea>
+                    <button id="loadUrlsBtn" class="method-button">NAČÍST Z URL</button>
+                </div>
+            </div>
+
+            <div class="progress-bar" id="progressBar" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div id="loadingMessage" class="loading" style="display: none;"></div>
+            <div id="messageArea"></div>
+        </div>
+
+        <div class="filters-section" id="filtersSection">
+            <div class="filter-title">🎛️ FILTRY</div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <div class="filter-title">Délka videa</div>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="shortVideos" checked>
+                            <span>⚡ Krátké (&lt;4min)</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="mediumVideos" checked>
+                            <span>⏳ Střední (4-20min)</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="longVideos" checked>
+                            <span>🎬 Dlouhé (&gt;20min)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-title">Jazyk</div>
+                    <select id="languageSelect" class="language-select" multiple>
+                        <option value="cs">🇨🇿 Čeština</option>
+                        <option value="sk">🇸🇰 Slovenština</option>
+                        <option value="en">🇺🇸 Angličtina</option>
+                        <option value="de">🇩🇪 Němčina</option>
+                        <option value="fr">🇫🇷 Francouzština</option>
+                        <option value="es">🇪🇸 Španělština</option>
+                        <option value="other">🌍 Ostatní</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-title">Datum publikování</div>
+                    <input type="date" id="dateFrom" class="method-input">
+                    <input type="date" id="dateTo" class="method-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="videos-section" id="videosSection">
+            <div class="videos-stats" id="videosStats"></div>
+            <div class="videos-grid" id="videosGrid"></div>
+        </div>
+
+        <div class="export-section" id="exportSection">
+            <div class="filter-title">📤 EXPORT A VÝSTUP</div>
+            <div class="export-controls">
+                <div class="export-group">
+                    <div class="filter-title">Formát výstupu</div>
+                    <select id="exportFormat" class="language-select">
+                        <option value="html">HTML s embed kódy</option>
+                        <option value="json">JSON data</option>
+                        <option value="csv">CSV tabulka</option>
+                    </select>
+                </div>
+
+                <div class="export-group">
+                    <div class="filter-title">Nastavení embedu</div>
+                    <input type="number" id="embedWidth" class="method-input" placeholder="Šířka (px)" value="560">
+                    <input type="number" id="embedHeight" class="method-input" placeholder="Výška (px)" value="315">
+                </div>
+            </div>
+
+            <div class="export-buttons">
+                <button id="generateBtn" class="export-button">📋 GENEROVAT</button>
+                <button id="copyBtn" class="export-button">📋 KOPÍROVAT</button>
+                <button id="downloadBtn" class="export-button">💾 STÁHNOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class YouTubeVideoFilter {
+            constructor() {
+                this.apiKey = '';
+                this.videos = [];
+                this.filteredVideos = [];
+                this.generatedContent = '';
+                
+                this.initializeEventListeners();
+                this.initializeDragDrop();
+            }
+
+            initializeEventListeners() {
+                // API Key
+                document.getElementById('apiKey').addEventListener('input', (e) => {
+                    this.apiKey = e.target.value.trim();
+                });
+
+                // Load methods
+                document.getElementById('loadChannelBtn').addEventListener('click', () => this.loadFromChannel());
+                document.getElementById('searchBtn').addEventListener('click', () => this.searchVideos());
+                document.getElementById('loadUrlsBtn').addEventListener('click', () => this.loadFromUrls());
+
+                // Filters
+                document.getElementById('shortVideos').addEventListener('change', () => this.applyFilters());
+                document.getElementById('mediumVideos').addEventListener('change', () => this.applyFilters());
+                document.getElementById('longVideos').addEventListener('change', () => this.applyFilters());
+                document.getElementById('languageSelect').addEventListener('change', () => this.applyFilters());
+                document.getElementById('dateFrom').addEventListener('change', () => this.applyFilters());
+                document.getElementById('dateTo').addEventListener('change', () => this.applyFilters());
+
+                // Export
+                document.getElementById('generateBtn').addEventListener('click', () => this.generateOutput());
+                document.getElementById('copyBtn').addEventListener('click', () => this.copyToClipboard());
+                document.getElementById('downloadBtn').addEventListener('click', () => this.downloadOutput());
+
+                // File input
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileSelect(e));
+            }
+
+            initializeDragDrop() {
+                const dropArea = document.getElementById('dropArea');
+                
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, this.preventDefaults, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+                });
+
+                dropArea.addEventListener('drop', (e) => this.handleDrop(e), false);
+                dropArea.addEventListener('click', () => document.getElementById('fileInput').click());
+            }
+
+            preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            handleDrop(e) {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.handleFileSelect({ target: { files } });
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file && (file.type === 'text/plain' || file.name.endsWith('.csv') || file.name.endsWith('.txt'))) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('urlTextarea').value = e.target.result;
+                    };
+                    reader.readAsText(file);
+                } else {
+                    this.showMessage('Prosím vyberte textový soubor (.txt, .csv)', 'error');
+                }
+            }
+
+            validateApiKey() {
+                if (!this.apiKey) {
+                    this.showMessage('Prosím zadejte YouTube API klíč', 'error');
+                    return false;
+                }
+                return true;
+            }
+
+            showMessage(message, type = 'info') {
+                const messageArea = document.getElementById('messageArea');
+                messageArea.innerHTML = `<div class="${type}">${message}</div>`;
+                setTimeout(() => messageArea.innerHTML = '', 5000);
+            }
+
+            showLoading(message) {
+                const loadingEl = document.getElementById('loadingMessage');
+                loadingEl.textContent = message;
+                loadingEl.style.display = 'block';
+            }
+
+            hideLoading() {
+                document.getElementById('loadingMessage').style.display = 'none';
+            }
+
+            updateProgress(current, total) {
+                const progressBar = document.getElementById('progressBar');
+                const progressFill = document.getElementById('progressFill');
+                
+                if (total > 0) {
+                    progressBar.style.display = 'block';
+                    const percentage = (current / total) * 100;
+                    progressFill.style.width = percentage + '%';
+                } else {
+                    progressBar.style.display = 'none';
+                }
+            }
+
+            async loadFromChannel() {
+                if (!this.validateApiKey()) return;
+                
+                const channelInput = document.getElementById('channelInput').value.trim();
+                if (!channelInput) {
+                    this.showMessage('Prosím zadejte název kanálu nebo Channel ID', 'error');
+                    return;
+                }
+
+                this.showLoading('Načítám videa z kanálu...');
+                
+                try {
+                    let channelId = channelInput;
+                    
+                    // If input starts with @, search for channel
+                    if (channelInput.startsWith('@')) {
+                        const searchResponse = await fetch(
+                            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(channelInput)}&key=${this.apiKey}`
+                        );
+                        const searchData = await searchResponse.json();
+                        
+                        if (searchData.items && searchData.items.length > 0) {
+                            channelId = searchData.items[0].snippet.channelId;
+                        } else {
+                            throw new Error('Kanál nebyl nalezen');
+                        }
+                    }
+
+                    await this.loadChannelVideos(channelId);
+                    
+                } catch (error) {
+                    this.showMessage(`Chyba při načítání kanálu: ${error.message}`, 'error');
+                    console.error('Channel loading error:', error);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            async loadChannelVideos(channelId) {
+                let allVideos = [];
+                let nextPageToken = '';
+                let pageCount = 0;
+                const maxPages = 10; // Limit to prevent excessive API calls
+
+                do {
+                    const response = await fetch(
+                        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&maxResults=50&pageToken=${nextPageToken}&order=date&key=${this.apiKey}`
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    const videoIds = data.items.map(item => item.id.videoId).join(',');
+                    const videosData = await this.getVideoDetails(videoIds);
+                    
+                    allVideos = allVideos.concat(videosData);
+                    nextPageToken = data.nextPageToken || '';
+                    pageCount++;
+                    
+                    this.updateProgress(pageCount, Math.min(maxPages, 10));
+                    
+                } while (nextPageToken && pageCount < maxPages);
+
+                this.videos = allVideos;
+                this.applyFilters();
+                this.showVideoResults();
+                this.showMessage(`Načteno ${allVideos.length} videí z kanálu`, 'success');
+            }
+
+            async searchVideos() {
+                if (!this.validateApiKey()) return;
+                
+                const query = document.getElementById('searchInput').value.trim();
+                if (!query) {
+                    this.showMessage('Prosím zadejte klíčová slova', 'error');
+                    return;
+                }
+
+                this.showLoading('Vyhledávám videa...');
+                
+                try {
+                    const response = await fetch(
+                        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=50&order=relevance&key=${this.apiKey}`
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    const videoIds = data.items.map(item => item.id.videoId).join(',');
+                    const videosData = await this.getVideoDetails(videoIds);
+                    
+                    this.videos = videosData;
+                    this.applyFilters();
+                    this.showVideoResults();
+                    this.showMessage(`Nalezeno ${videosData.length} videí`, 'success');
+                    
+                } catch (error) {
+                    this.showMessage(`Chyba při vyhledávání: ${error.message}`, 'error');
+                    console.error('Search error:', error);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            async loadFromUrls() {
+                if (!this.validateApiKey()) return;
+                
+                const urlText = document.getElementById('urlTextarea').value.trim();
+                if (!urlText) {
+                    this.showMessage('Prosím zadejte YouTube URL', 'error');
+                    return;
+                }
+
+                this.showLoading('Načítám videa z URL...');
+                
+                try {
+                    const urls = urlText.split('\n').filter(url => url.trim());
+                    const videoIds = urls.map(url => this.extractVideoId(url.trim())).filter(id => id);
+                    
+                    if (videoIds.length === 0) {
+                        throw new Error('Nebyly nalezeny platné YouTube URL');
+                    }
+
+                    // Process videos in batches of 50
+                    let allVideos = [];
+                    for (let i = 0; i < videoIds.length; i += 50) {
+                        const batch = videoIds.slice(i, i + 50);
+                        const batchData = await this.getVideoDetails(batch.join(','));
+                        allVideos = allVideos.concat(batchData);
+                        
+                        this.updateProgress(i + batch.length, videoIds.length);
+                    }
+
+                    this.videos = allVideos;
+                    this.applyFilters();
+                    this.showVideoResults();
+                    this.showMessage(`Načteno ${allVideos.length} videí z ${videoIds.length} URL`, 'success');
+                    
+                } catch (error) {
+                    this.showMessage(`Chyba při načítání URL: ${error.message}`, 'error');
+                    console.error('URL loading error:', error);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            extractVideoId(url) {
+                const patterns = [
+                    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+                    /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = url.match(pattern);
+                    if (match) {
+                        return match[1];
+                    }
+                }
+                return null;
+            }
+
+            async getVideoDetails(videoIds) {
+                const response = await fetch(
+                    `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds}&key=${this.apiKey}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
+                return data.items.map(video => this.processVideoData(video));
+            }
+
+            processVideoData(video) {
+                return {
+                    id: video.id,
+                    title: video.snippet.title,
+                    description: video.snippet.description,
+                    channel: video.snippet.channelTitle,
+                    publishedAt: video.snippet.publishedAt,
+                    duration: this.parseDuration(video.contentDetails.duration),
+                    durationCategory: this.getDurationCategory(video.contentDetails.duration),
+                    viewCount: parseInt(video.statistics.viewCount || 0),
+                    thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.medium?.url || video.snippet.thumbnails.default?.url,
+                    language: this.detectLanguage(video.snippet.title + ' ' + video.snippet.description),
+                    url: `https://www.youtube.com/watch?v=${video.id}`
+                };
+            }
+
+            parseDuration(duration) {
+                const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+                const hours = parseInt(match[1]) || 0;
+                const minutes = parseInt(match[2]) || 0;
+                const seconds = parseInt(match[3]) || 0;
+                
+                const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                
+                if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+
+            getDurationCategory(duration) {
+                const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+                const hours = parseInt(match[1]) || 0;
+                const minutes = parseInt(match[2]) || 0;
+                const seconds = parseInt(match[3]) || 0;
+                
+                const totalMinutes = hours * 60 + minutes + seconds / 60;
+                
+                if (totalMinutes < 4) return 'short';
+                if (totalMinutes <= 20) return 'medium';
+                return 'long';
+            }
+
+            detectLanguage(text) {
+                const czechWords = /\b(je|a|v|na|pro|se|to|že|jak|už|tak|ale|nebo|když|jeho|její|bude|jsem|jste|jsou|byl|byla|bylo|byli|byly|může|můžete|můžeme|který|která|které|velmi|také|pouze|proto|mezi|před|po|pod|nad|při|bez|do|od|ze|za|během|podle|kolem|okolo|asi|více|méně|nejlepší|nejhorší)\b/gi;
+                const slovakWords = /\b(je|a|v|na|pre|sa|to|že|ako|už|tak|ale|alebo|keď|jeho|jej|bude|som|ste|sú|bol|bola|bolo|boli|boly|môže|môžete|môžeme|ktorý|ktorá|ktoré|veľmi|tiež|iba|preto|medzi|pred|po|pod|nad|pri|bez|do|od|zo|za|počas|podľa|okolo|asi|viac|menej|najlepší|najhorší)\b/gi;
+                const englishWords = /\b(the|and|in|on|for|is|it|that|how|already|so|but|or|when|his|her|will|am|are|was|were|can|could|which|very|also|only|because|between|before|after|under|over|during|according|around|about|more|less|best|worst)\b/gi;
+                const germanWords = /\b(der|die|das|und|in|zu|den|von|ist|mit|sich|auf|für|als|wird|an|auch|oder|nach|kann|aber|nicht|nur|noch|wie|über|aus|bei|bis|durch|gegen|ohne|um|unter|während|wegen|zwischen)\b/gi;
+
+                const czechMatches = (text.match(czechWords) || []).length;
+                const slovakMatches = (text.match(slovakWords) || []).length;
+                const englishMatches = (text.match(englishWords) || []).length;
+                const germanMatches = (text.match(germanWords) || []).length;
+
+                const maxMatches = Math.max(czechMatches, slovakMatches, englishMatches, germanMatches);
+                
+                if (maxMatches === 0) return 'other';
+                if (czechMatches === maxMatches) return 'cs';
+                if (slovakMatches === maxMatches) return 'sk';
+                if (englishMatches === maxMatches) return 'en';
+                if (germanMatches === maxMatches) return 'de';
+                
+                return 'other';
+            }
+
+            applyFilters() {
+                if (this.videos.length === 0) return;
+
+                let filtered = [...this.videos];
+
+                // Duration filter
+                const shortChecked = document.getElementById('shortVideos').checked;
+                const mediumChecked = document.getElementById('mediumVideos').checked;
+                const longChecked = document.getElementById('longVideos').checked;
+
+                filtered = filtered.filter(video => {
+                    if (video.durationCategory === 'short' && shortChecked) return true;
+                    if (video.durationCategory === 'medium' && mediumChecked) return true;
+                    if (video.durationCategory === 'long' && longChecked) return true;
+                    return false;
+                });
+
+                // Language filter
+                const selectedLanguages = Array.from(document.getElementById('languageSelect').selectedOptions).map(option => option.value);
+                if (selectedLanguages.length > 0) {
+                    filtered = filtered.filter(video => selectedLanguages.includes(video.language));
+                }
+
+                // Date filter
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+
+                if (dateFrom) {
+                    filtered = filtered.filter(video => new Date(video.publishedAt) >= new Date(dateFrom));
+                }
+
+                if (dateTo) {
+                    filtered = filtered.filter(video => new Date(video.publishedAt) <= new Date(dateTo));
+                }
+
+                this.filteredVideos = filtered;
+                this.updateVideoDisplay();
+                this.updateStats();
+            }
+
+            updateVideoDisplay() {
+                const grid = document.getElementById('videosGrid');
+                grid.innerHTML = '';
+
+                this.filteredVideos.forEach(video => {
+                    const videoCard = this.createVideoCard(video);
+                    grid.appendChild(videoCard);
+                });
+            }
+
+            createVideoCard(video) {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                
+                const languageFlags = {
+                    'cs': '🇨🇿',
+                    'sk': '🇸🇰', 
+                    'en': '🇺🇸',
+                    'de': '🇩🇪',
+                    'fr': '🇫🇷',
+                    'es': '🇪🇸',
+                    'other': '🌍'
+                };
+
+                card.innerHTML = `
+                    <div class="video-thumbnail" style="background-image: url('${video.thumbnail}')">
+                        <div class="video-duration">${video.duration}</div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-channel">${video.channel}</div>
+                        <div class="video-meta">
+                            <span>${this.formatViews(video.viewCount)} zhlédnutí</span>
+                            <span class="video-language">
+                                ${languageFlags[video.language] || '🌍'}
+                                ${this.getLanguageName(video.language)}
+                            </span>
+                        </div>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            formatViews(views) {
+                if (views >= 1000000) {
+                    return (views / 1000000).toFixed(1) + 'M';
+                } else if (views >= 1000) {
+                    return (views / 1000).toFixed(1) + 'K';
+                }
+                return views.toString();
+            }
+
+            getLanguageName(code) {
+                const names = {
+                    'cs': 'Čeština',
+                    'sk': 'Slovenština',
+                    'en': 'Angličtina',
+                    'de': 'Němčina',
+                    'fr': 'Francouzština',
+                    'es': 'Španělština',
+                    'other': 'Ostatní'
+                };
+                return names[code] || 'Neznámý';
+            }
+
+            updateStats() {
+                const stats = document.getElementById('videosStats');
+                const totalDuration = this.filteredVideos.reduce((sum, video) => {
+                    const parts = video.duration.split(':');
+                    if (parts.length === 2) {
+                        return sum + parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                    } else if (parts.length === 3) {
+                        return sum + parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+                    }
+                    return sum;
+                }, 0);
+
+                const hours = Math.floor(totalDuration / 3600);
+                const minutes = Math.floor((totalDuration % 3600) / 60);
+
+                stats.innerHTML = `
+                    <strong>📊 Statistiky:</strong> 
+                    ${this.filteredVideos.length} videí z celkem ${this.videos.length} | 
+                    Celková délka: ${hours}h ${minutes}min |
+                    Průměrná délka: ${Math.round(totalDuration / this.filteredVideos.length / 60)}min
+                `;
+            }
+
+            showVideoResults() {
+                document.getElementById('filtersSection').classList.add('visible');
+                document.getElementById('videosSection').classList.add('visible');
+                document.getElementById('exportSection').classList.add('visible');
+            }
+
+            generateOutput() {
+                if (this.filteredVideos.length === 0) {
+                    this.showMessage('Nejprve načtěte a vyfiltrujte videa', 'error');
+                    return;
+                }
+
+                const format = document.getElementById('exportFormat').value;
+                const width = document.getElementById('embedWidth').value || 560;
+                const height = document.getElementById('embedHeight').value || 315;
+
+                switch (format) {
+                    case 'html':
+                        this.generatedContent = this.generateHTML(width, height);
+                        break;
+                    case 'json':
+                        this.generatedContent = this.generateJSON();
+                        break;
+                    case 'csv':
+                        this.generatedContent = this.generateCSV();
+                        break;
+                }
+
+                this.showMessage('Výstup byl vygenerován! Můžete ho zkopírovat nebo stáhnout.', 'success');
+            }
+
+            generateHTML(width, height) {
+                let html = `<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Videa - ${new Date().toLocaleDateString('cs-CZ')}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .video-container { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .video-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .video-meta { color: #666; margin-bottom: 15px; font-size: 14px; }
+        .video-embed { margin-bottom: 15px; }
+        .video-description { color: #333; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <h1>YouTube Videa Export</h1>
+    <p>Exportováno: ${new Date().toLocaleString('cs-CZ')}</p>
+    <p>Počet videí: ${this.filteredVideos.length}</p>
+    <hr>
+`;
+
+                this.filteredVideos.forEach(video => {
+                    html += `
+    <div class="video-container">
+        <div class="video-title">${video.title}</div>
+        <div class="video-meta">
+            <strong>Kanál:</strong> ${video.channel} | 
+            <strong>Délka:</strong> ${video.duration} | 
+            <strong>Zhlédnutí:</strong> ${this.formatViews(video.viewCount)} |
+            <strong>Publikováno:</strong> ${new Date(video.publishedAt).toLocaleDateString('cs-CZ')}
+        </div>
+        <div class="video-embed">
+            <iframe width="${width}" height="${height}" 
+                src="https://www.youtube.com/embed/${video.id}" 
+                frameborder="0" allowfullscreen>
+            </iframe>
+        </div>
+        <div class="video-description">
+            ${video.description.substring(0, 500)}${video.description.length > 500 ? '...' : ''}
+        </div>
+    </div>
+`;
+                });
+
+                html += `
+</body>
+</html>`;
+
+                return html;
+            }
+
+            generateJSON() {
+                const output = {
+                    exportDate: new Date().toISOString(),
+                    totalVideos: this.filteredVideos.length,
+                    videos: this.filteredVideos.map(video => ({
+                        id: video.id,
+                        title: video.title,
+                        description: video.description,
+                        channel: video.channel,
+                        publishedAt: video.publishedAt,
+                        duration: video.duration,
+                        viewCount: video.viewCount,
+                        language: video.language,
+                        url: video.url,
+                        embedCode: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${video.id}" frameborder="0" allowfullscreen></iframe>`
+                    }))
+                };
+
+                return JSON.stringify(output, null, 2);
+            }
+
+            generateCSV() {
+                const headers = [
+                    'ID', 'Název', 'Kanál', 'Délka', 'Zhlédnutí', 'Publikováno', 
+                    'Jazyk', 'URL', 'Embed kód'
+                ];
+                
+                let csv = headers.join(',') + '\n';
+                
+                this.filteredVideos.forEach(video => {
+                    const row = [
+                        video.id,
+                        `"${video.title.replace(/"/g, '""')}"`,
+                        `"${video.channel.replace(/"/g, '""')}"`,
+                        video.duration,
+                        video.viewCount,
+                        new Date(video.publishedAt).toLocaleDateString('cs-CZ'),
+                        this.getLanguageName(video.language),
+                        video.url,
+                        `"<iframe width=""560"" height=""315"" src=""https://www.youtube.com/embed/${video.id}"" frameborder=""0"" allowfullscreen></iframe>"`
+                    ];
+                    csv += row.join(',') + '\n';
+                });
+
+                return csv;
+            }
+
+            async copyToClipboard() {
+                if (!this.generatedContent) {
+                    this.showMessage('Nejprve vygenerujte výstup', 'error');
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(this.generatedContent);
+                    this.showMessage('Obsah byl zkopírován do schránky!', 'success');
+                } catch (error) {
+                    this.showMessage('Chyba při kopírování: ' + error.message, 'error');
+                }
+            }
+
+            downloadOutput() {
+                if (!this.generatedContent) {
+                    this.showMessage('Nejprve vygenerujte výstup', 'error');
+                    return;
+                }
+
+                const format = document.getElementById('exportFormat').value;
+                const extensions = { html: 'html', json: 'json', csv: 'csv' };
+                const mimeTypes = {
+                    html: 'text/html',
+                    json: 'application/json',
+                    csv: 'text/csv'
+                };
+
+                const blob = new Blob([this.generatedContent], { 
+                    type: mimeTypes[format] 
+                });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `youtube-export-${new Date().toISOString().split('T')[0]}.${extensions[format]}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showMessage('Soubor byl stažen!', 'success');
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new YouTubeVideoFilter();
+        });
+    </script>
+</body>
+</html>

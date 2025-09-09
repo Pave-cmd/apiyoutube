@@ -1,0 +1,16 @@
+{
+  "name": "youtube-filter-app",
+  "version": "1.0.0",
+  "description": "YouTube Video Filter & Embed Generator",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["youtube", "filter", "embed", "video"],
+  "author": "",
+  "license": "MIT"
+}
